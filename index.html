@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>💰 PayTogether - مدیریت خرج و تسویه گروهی</title>
+
+  <!-- فونت فارسی Vazirmatn -->
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap RTL -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <!-- dayjs -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background-color: #f9fafb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .navbar {
+      background-color: #198754; /* رنگ سبز PayTogether */
+    }
+    .navbar-brand, .nav-link {
+      color: #fff !important;
+    }
+    .card {
+      border-radius: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    footer {
+      background: #198754;
+      color: white;
+      padding: 1rem 0;
+      text-align: center;
+      margin-top: auto;
+    }
+    .btn-primary {
+      border-radius: 1rem;
+      background-color: #198754;
+      border-color: #198754;
+    }
+    .btn-primary:hover {
+      background-color: #157347;
+    }
+    .modal-content { border-radius: 1rem; }
+    .toast-container {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      z-index: 1055;
+    }
+    @media (max-width: 768px) {
+      .card { margin-bottom: 1rem; }
+    }
+    #login-page, #about-page, #contact-page {
+      max-width: 500px;
+      margin: 5rem auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- نوار بالا -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#" id="nav-home">💰 PayTogether</a>
+      <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link active" href="#" id="nav-dashboard">داشبورد</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" id="nav-groups">گروه‌ها</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" id="nav-about">درباره ما</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" id="nav-contact">تماس با ما</a></li>
+        </ul>
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link" href="#" id="nav-account"><i class="fa fa-user"></i> حساب من</a></li>
+          <li class="nav-item"><a class="nav-link text-warning" href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> خروج</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- محتوای اصلی -->
+  <main class="container my-4 flex-grow-1">
+
+    <!-- صفحه ورود -->
+    <div id="login-page" class="card p-4 d-none">
+      <h4 class="text-center mb-3">ورود به PayTogether</h4>
+      <form id="loginForm">
+        <div class="mb-3">
+          <label class="form-label">نام کاربری</label>
+          <input type="text" class="form-control" id="loginUser" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">رمز عبور</label>
+          <input type="password" class="form-control" id="loginPass" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">ورود</button>
+        <div class="text-center mt-2">
+          <a href="#" id="show-register">ثبت‌نام ندارید؟ ایجاد حساب</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- ثبت نام -->
+    <div id="register-page" class="card p-4 d-none">
+      <h4 class="text-center mb-3">ثبت‌نام در PayTogether</h4>
+      <form id="registerForm">
+        <div class="mb-3">
+          <label class="form-label">نام کاربری</label>
+          <input type="text" class="form-control" id="regUser" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">رمز عبور</label>
+          <input type="password" class="form-control" id="regPass" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">ثبت‌نام</button>
+        <div class="text-center mt-2">
+          <a href="#" id="show-login">بازگشت به ورود</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- داشبورد -->
+    <div id="dashboard">
+      <h4 class="mb-3">خلاصه بدهی و طلب گروه‌ها</h4>
+      <div class="row" id="dashboard-cards"></div>
+    </div>
+
+    <!-- گروه‌ها -->
+    <div id="groups" class="d-none">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>گروه‌ها</h4>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addGroupModal"><i class="fa fa-plus"></i> ایجاد گروه جدید</button>
+      </div>
+      <div id="group-list" class="list-group"></div>
+    </div>
+
+    <!-- درباره ما -->
+    <div id="about-page" class="d-none">
+      <div class="card p-4">
+        <h4>درباره PayTogether</h4>
+        <p>PayTogether پلتفرمی ساده و شفاف برای تقسیم هزینه‌ها میان دوستان، خانواده یا تیم‌هاست.  
+          با ما، به راحتی خرج‌ها را ثبت کنید، سهم هر فرد را ببینید و تسویه‌ها را مدیریت کنید.</p>
+      </div>
+    </div>
+
+    <!-- تماس با ما -->
+    <div id="contact-page" class="d-none">
+      <div class="card p-4">
+        <h4>تماس با ما</h4>
+        <p>در صورت نیاز به پشتیبانی یا همکاری با ما در تماس باشید:</p>
+        <ul>
+          <li>ایمیل: support@paytogether.ir</li>
+          <li>تلفن: ۰۲۱-۱۲۳۴۵۶۷۸</li>
+          <li>اینستاگرام: <a href="#">@paytogether_ir</a></li>
+        </ul>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- فوتر -->
+  <footer>
+    <div>© ۱۴۰۴ PayTogether | تمامی حقوق محفوظ است.</div>
+  </footer>
+
+  <!-- Modal افزودن گروه -->
+  <div class="modal fade" id="addGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">ایجاد گروه جدید</h5></div>
+        <div class="modal-body">
+          <form id="groupForm">
+            <div class="mb-3">
+              <label class="form-label">نام گروه</label>
+              <input type="text" class="form-control" id="groupName" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">اعضا (با کاما جدا کنید)</label>
+              <input type="text" class="form-control" id="groupMembers" placeholder="مثلاً: علی, رضا, نرگس">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">ثبت گروه</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast اعلان -->
+  <div class="toast-container">
+    <div id="mainToast" class="toast align-items-center text-bg-success border-0">
+      <div class="d-flex">
+        <div class="toast-body" id="toastMsg">عملیات موفق بود.</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  // === مدیریت کاربر و احراز هویت ===
+  function getUser(){ return JSON.parse(localStorage.getItem('user')||'null'); }
+  function setUser(u){ localStorage.setItem('user', JSON.stringify(u)); }
+  function logout(){ localStorage.removeItem('user'); location.reload(); }
+
+  $('#logoutBtn').click(()=>{ logout(); });
+
+  // === داده‌ها ===
+  function loadData(){
+    let data = JSON.parse(localStorage.getItem('groups')||'[]');
+    if(data.length===0){
+      data = [{
+        id:1,
+        name:'سفر شمال',
+        members:['علی','رضا','نرگس','مریم'],
+        expenses:[
+          {title:'هتل', amount:800000, payer:'علی', sharedWith:['رضا','نرگس','مریم','علی'], date:dayjs().format('YYYY-MM-DD'), desc:'هتل رامسر'},
+          {title:'بنزین', amount:400000, payer:'رضا', sharedWith:['رضا','علی'], date:dayjs().format('YYYY-MM-DD'), desc:'رفت و برگشت'},
+        ],
+        payments:[]
+      }];
+      localStorage.setItem('groups', JSON.stringify(data));
+    }
+    return data;
+  }
+  function saveData(d){ localStorage.setItem('groups', JSON.stringify(d)); }
+  let groups = loadData();
+
+  // === توست اعلان ===
+  const toast = new bootstrap.Toast(document.getElementById('mainToast'));
+  function showToast(msg, success=true){
+    $('#toastMsg').text(msg);
+    $('#mainToast').removeClass('text-bg-danger text-bg-success')
+                   .addClass(success?'text-bg-success':'text-bg-danger');
+    toast.show();
+  }
+
+  // === محاسبه بدهی‌ها ===
+  function calculateBalances(group){
+    let balance = {};
+    group.members.forEach(m=>balance[m]=0);
+    group.expenses.forEach(exp=>{
+      const share = exp.amount / exp.sharedWith.length;
+      exp.sharedWith.forEach(m=>{
+        if(m!==exp.payer) balance[m]-=share;
+      });
+      balance[exp.payer]+=exp.amount - share*(exp.sharedWith.length-1);
+    });
+    return balance;
+  }
+
+  // === رندر داشبورد ===
+  function renderDashboard(){
+    $('#dashboard-cards').empty();
+    groups.forEach(g=>{
+      const bal = calculateBalances(g);
+      const debts = Object.entries(bal).map(([m,v])=>`${m}: ${v.toFixed(0)} تومان`).join('<br>');
+      $('#dashboard-cards').append(`
+        <div class="col-md-4">
+          <div class="card p-3 mb-3">
+            <h5>${g.name}</h5>
+            <div class="small text-muted">${debts}</div>
+            <button class="btn btn-sm btn-outline-primary mt-2" onclick="showGroup(${g.id})">جزئیات گروه</button>
+          </div>
+        </div>`);
+    });
+  }
+
+  // === گروه‌ها ===
+  function renderGroups(){
+    $('#group-list').empty();
+    groups.forEach(g=>{
+      $('#group-list').append(`
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>${g.name}</strong>
+            <div class="small text-muted">${g.members.join(', ')}</div>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary" onclick="showGroup(${g.id})">مشاهده</button>
+        </div>`);
+    });
+  }
+
+  function showGroup(id){
+    const g = groups.find(x=>x.id===id);
+    alert('پیش‌نمایش گروه: '+g.name);
+  }
+
+  // === سوئیچ صفحات ===
+  function showPage(id){
+    $('main > div').addClass('d-none');
+    $(id).removeClass('d-none');
+    $('.nav-link').removeClass('active');
+  }
+
+  $('#nav-dashboard').click(()=>{ showPage('#dashboard'); $('#nav-dashboard').addClass('active'); });
+  $('#nav-groups').click(()=>{ showPage('#groups'); $('#nav-groups').addClass('active'); });
+  $('#nav-about').click(()=>{ showPage('#about-page'); $('#nav-about').addClass('active'); });
+  $('#nav-contact').click(()=>{ showPage('#contact-page'); $('#nav-contact').addClass('active'); });
+  $('#nav-home').click(()=>{ showPage('#dashboard'); });
+
+  // === فرم گروه ===
+  $('#groupForm').on('submit', e=>{
+    e.preventDefault();
+    const name = $('#groupName').val().trim();
+    const members = $('#groupMembers').val().split(',').map(x=>x.trim()).filter(x=>x);
+    const newGroup = { id: Date.now(), name, members, expenses:[], payments:[] };
+    groups.push(newGroup);
+    saveData(groups);
+    renderGroups();
+    $('#addGroupModal').modal('hide');
+    showToast('گروه با موفقیت اضافه شد.');
+  });
+
+  // === ورود / ثبت‌نام ===
+  $('#show-register').click(()=>{ $('#login-page').addClass('d-none'); $('#register-page').removeClass('d-none'); });
+  $('#show-login').click(()=>{ $('#register-page').addClass('d-none'); $('#login-page').removeClass('d-none'); });
+
+  $('#loginForm').submit(e=>{
+    e.preventDefault();
+    const user = $('#loginUser').val();
+    const pass = $('#loginPass').val();
+    const reg = JSON.parse(localStorage.getItem('registeredUsers')||'{}');
+    if(reg[user] && reg[user]===pass){
+      setUser({user});
+      showToast('ورود موفقیت‌آمیز بود');
+      location.reload();
+    } else showToast('کاربر یا رمز اشتباه است', false);
+  });
+
+  $('#registerForm').submit(e=>{
+    e.preventDefault();
+    const user = $('#regUser').val();
+    const pass = $('#regPass').val();
+    let reg = JSON.parse(localStorage.getItem('registeredUsers')||'{}');
+    if(reg[user]) return showToast('این کاربر وجود دارد', false);
+    reg[user]=pass;
+    localStorage.setItem('registeredUsers', JSON.stringify(reg));
+    showToast('ثبت‌نام انجام شد. اکنون وارد شوید.');
+    $('#register-page').addClass('d-none');
+    $('#login-page').removeClass('d-none');
+  });
+
+  // === شروع ===
+  $(document).ready(()=>{
+    const u = getUser();
+    if(!u){
+      showPage('#login-page');
+    } else {
+      renderDashboard();
+      renderGroups();
+      showPage('#dashboard');
+    }
+  });
+  </script>
+
+  <!-- TODO نسخه بعدی:
+  - افزودن جزئیات کامل گروه و افزودن هزینه
+  - الگوریتم تسویه کمینه (greedy)
+  - OCR رسیدها با Tesseract.js
+  - اتصال درگاه پرداخت واقعی -->
+</body>
+</html>
